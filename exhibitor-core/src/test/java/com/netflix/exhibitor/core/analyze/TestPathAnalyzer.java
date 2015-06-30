@@ -16,35 +16,37 @@
 
 package com.netflix.exhibitor.core.analyze;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.netflix.exhibitor.core.Exhibitor;
-import org.mockito.Mockito;
-import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.netflix.exhibitor.core.Exhibitor;
+
 public class TestPathAnalyzer
 {
     @Test
-    public void         testBasic() throws Exception
+    public void testBasic() throws Exception
     {
-        final Map<PathAndMax, List<String>>       data = Maps.newHashMap();
+        final Map<PathAndMax, List<String>> data = Maps.newHashMap();
         data.put(new PathAndMax("/r1", 1), Arrays.asList("p1-0001", "p2-0002"));
         data.put(new PathAndMax("/r2", 1), Arrays.asList("p4-0001", "p1-0002"));
         data.put(new PathAndMax("/r3", 1), Arrays.asList("p2-0001", "p5-0002"));
         data.put(new PathAndMax("/r4", 1), Arrays.asList("p2-0001", "p3-0002"));
         data.put(new PathAndMax("/r5", 1), Arrays.asList("p3-0001", "p4-0002"));
 
-        Exhibitor       mockExhibitor = Mockito.mock(Exhibitor.class);
-        PathAnalyzer    pathAnalyzer = new PathAnalyzer(mockExhibitor, Lists.newArrayList(data.keySet()))
+        Exhibitor mockExhibitor = Mockito.mock(Exhibitor.class);
+        PathAnalyzer pathAnalyzer = new PathAnalyzer(mockExhibitor, Lists.newArrayList(data.keySet()))
         {
             @Override
             protected List<String> getChildren(String path) throws Exception
             {
                 List<String> l = data.get(new PathAndMax(path, 0));
-                return (l != null) ? l : Lists.<String>newArrayList();
+                return (l != null) ? l : Lists.<String> newArrayList();
             }
 
             @Override

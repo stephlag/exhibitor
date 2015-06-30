@@ -43,26 +43,25 @@ class Details
     final String zooKeeperJarPath;
     final Properties properties;
 
-    Details(Exhibitor exhibitor) throws IOException
-    {
+    Details(Exhibitor exhibitor) throws IOException {
+
         InstanceConfig config = exhibitor.getConfigManager().getConfig();
 
         this.zooKeeperDirectory = getZooKeeperDirectory(config);
         this.dataDirectory = new File(config.getString(StringConfigs.ZOOKEEPER_DATA_DIRECTORY));
 
-        String      logDirectory = config.getString(StringConfigs.ZOOKEEPER_LOG_DIRECTORY);
+        String logDirectory = config.getString(StringConfigs.ZOOKEEPER_LOG_DIRECTORY);
         this.logDirectory = (logDirectory.trim().length() > 0) ? new File(logDirectory) : this.dataDirectory;
 
         configDirectory = new File(zooKeeperDirectory, "conf");
         logPaths = findJar(new File(zooKeeperDirectory, "lib"), "(.*log4j.*)|(.*slf4j.*)");
-        zooKeeperJarPath = findJar(this.zooKeeperDirectory, "zookeeper.*");
+        zooKeeperJarPath = findJar(this.zooKeeperDirectory, "zookeeper.jar");
 
         properties = new Properties();
-        if ( isValid() )
-        {
-            EncodedConfigParser     parser = new EncodedConfigParser(exhibitor.getConfigManager().getConfig().getString(StringConfigs.ZOO_CFG_EXTRA));
-            for ( EncodedConfigParser.FieldValue fv : parser.getFieldValues() )
-            {
+        if (isValid()) {
+            EncodedConfigParser parser = new EncodedConfigParser(exhibitor.getConfigManager().getConfig()
+                    .getString(StringConfigs.ZOO_CFG_EXTRA));
+            for (EncodedConfigParser.FieldValue fv : parser.getFieldValues()) {
                 properties.setProperty(fv.getField(), fv.getValue());
             }
             properties.setProperty("dataDir", dataDirectory.getPath());
@@ -73,43 +72,44 @@ class Details
     boolean isValid()
     {
         return isValidPath(zooKeeperDirectory)
-            && isValidPath(dataDirectory)
-            && isValidPath(configDirectory)
-            && isValidPath(logDirectory)
-            ;
+                && isValidPath(dataDirectory)
+                && isValidPath(configDirectory)
+                && isValidPath(logDirectory);
     }
 
     private File getZooKeeperDirectory(InstanceConfig config)
     {
-        String  configValue = config.getString(StringConfigs.ZOOKEEPER_INSTALL_DIRECTORY);
-        if ( (configValue.length() > 1) && configValue.endsWith("*") )
+        String configValue = config.getString(StringConfigs.ZOOKEEPER_INSTALL_DIRECTORY);
+        System.out.println("Config Value = " + configValue);
+        if ((configValue.length() > 1) && configValue.endsWith("*"))
         {
-            File      basePath = new File(configValue.substring(0, configValue.length() - 1));
-            File[]    possibles = basePath.listFiles();
-            if ( (possibles != null) && (possibles.length > 0) )
+            File basePath = new File(configValue.substring(0, configValue.length() - 1));
+            File[] possibles = basePath.listFiles();
+            if ((possibles != null) && (possibles.length > 0))
             {
-                final NaturalOrderComparator    naturalOrderComparator = new NaturalOrderComparator();
-                List<File>                      possiblesList = Arrays.asList(possibles);
+                final NaturalOrderComparator naturalOrderComparator = new NaturalOrderComparator();
+                List<File> possiblesList = Arrays.asList(possibles);
                 Collections.sort
-                (
-                    possiblesList,
-                    new Comparator<File>()
-                    {
-                        @Override
-                        public int compare(File f1, File f2)
-                        {
-                            int         f1Dir = f1.isDirectory() ? 0 : 1;
-                            int         f2Dir = f2.isDirectory() ? 0 : 1;
-                            int         diff = f1Dir - f2Dir;
-                            if ( diff == 0 )
-                            {
-                                diff = -1 * naturalOrderComparator.compare(f1.getName(), f2.getName()); // reverse order
-                            }
-                            return diff;
-                        }
-                    }
-                );
-                return possiblesList.get(0);    // should be latest version
+                        (
+                                possiblesList,
+                                new Comparator<File>()
+                                {
+                                    @Override
+                                    public int compare(File f1, File f2)
+                                    {
+                                        int f1Dir = f1.isDirectory() ? 0 : 1;
+                                        int f2Dir = f2.isDirectory() ? 0 : 1;
+                                        int diff = f1Dir - f2Dir;
+                                        if (diff == 0)
+                                        {
+                                            diff = -1 * naturalOrderComparator.compare(f1.getName(), f2.getName()); // reverse
+                                                                                                                    // order
+                                        }
+                                        return diff;
+                                    }
+                                }
+                        );
+                return possiblesList.get(0); // should be latest version
             }
         }
         return new File(configValue);
@@ -122,14 +122,14 @@ class Details
 
     private String findJar(File dir, String regex) throws IOException
     {
-        if ( !isValid() )
+        if (!isValid())
         {
             return "";
         }
 
         final Pattern pattern = Pattern.compile(regex);
-        File[]          files = dir.listFiles
-            (
+        File[] files = dir.listFiles
+                (
                 new FileFilter()
                 {
                     @Override
@@ -138,25 +138,25 @@ class Details
                         return pattern.matcher(f.getName()).matches() && f.getName().endsWith(".jar");
                     }
                 }
-            );
+                );
 
-        if ( (files == null) || (files.length == 0) )
+        if ((files == null) || (files.length == 0))
         {
             throw new IOException("Could not find " + regex + " jar");
         }
 
         Iterable<String> transformed = Iterables.transform
-            (
-                Arrays.asList(files),
-                new Function<File, String>()
-                {
-                    @Override
-                    public String apply(File f)
-                    {
-                        return f.getPath();
-                    }
-                }
-            );
+                (
+                        Arrays.asList(files),
+                        new Function<File, String>()
+                        {
+                            @Override
+                            public String apply(File f)
+                            {
+                                return f.getPath();
+                            }
+                        }
+                );
         return Joiner.on(':').join(transformed);
     }
 }

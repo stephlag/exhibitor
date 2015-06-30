@@ -40,9 +40,9 @@ import java.util.Properties;
 
 public class ExhibitorServletContextListener implements ServletContextListener
 {
-    private final Logger        log = LoggerFactory.getLogger(getClass());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
-    private volatile Exhibitor  exhibitor;
+    private volatile Exhibitor exhibitor;
     private volatile ExhibitorCreator exhibitorCreator;
 
     private static final String OUR_PREFIX = "exhibitor-";
@@ -53,31 +53,27 @@ public class ExhibitorServletContextListener implements ServletContextListener
     {
         Map<String, String> argsBuilder = makeArgsBuilder();
 
-        try
-        {
+        try {
             exhibitorCreator = new ExhibitorCreator(toArgsArray(argsBuilder));
 
-            exhibitor = new Exhibitor(exhibitorCreator.getConfigProvider(), null, exhibitorCreator.getBackupProvider(), exhibitorCreator.getBuilder().build());
+            exhibitor = new Exhibitor(exhibitorCreator.getConfigProvider(), null, exhibitorCreator.getBackupProvider(),
+                    exhibitorCreator.getBuilder().build());
             exhibitor.start();
 
             event.getServletContext().setAttribute(ExhibitorServletContextListener.class.getName(), exhibitor);
-        }
-        catch ( MissingConfigurationTypeException exit )
-        {
+        } catch (MissingConfigurationTypeException exit) {
             log.error("Configuration type (" + OUR_PREFIX + ExhibitorCLI.CONFIG_TYPE + ") must be specified");
             exit.getCli().logHelp(OUR_PREFIX);
             throw new RuntimeException(exit);
-        }
-        catch ( ExhibitorCreatorExit exit )
+        } catch (ExhibitorCreatorExit exit)
         {
-            if ( exit.getError() != null )
+            if (exit.getError() != null)
             {
                 log.error(exit.getError());
             }
             exit.getCli().logHelp(OUR_PREFIX);
             throw new RuntimeException(exit);
-        }
-        catch ( Exception e )
+        } catch (Exception e)
         {
             log.error("Trying to create Exhibitor", e);
             throw new RuntimeException(e);
@@ -87,15 +83,15 @@ public class ExhibitorServletContextListener implements ServletContextListener
     @Override
     public void contextDestroyed(ServletContextEvent event)
     {
-        if ( exhibitor != null )
+        if (exhibitor != null)
         {
             CloseableUtils.closeQuietly(exhibitor);
             exhibitor = null;
         }
 
-        if ( exhibitorCreator != null )
+        if (exhibitorCreator != null)
         {
-            for ( Closeable closeable : exhibitorCreator.getCloseables() )
+            for (Closeable closeable : exhibitorCreator.getCloseables())
             {
                 CloseableUtils.closeQuietly(closeable);
             }
@@ -104,8 +100,8 @@ public class ExhibitorServletContextListener implements ServletContextListener
 
     private String[] toArgsArray(Map<String, String> argsBuilder)
     {
-        List<String>        args = Lists.newArrayList();
-        for ( Map.Entry<String, String> entry : argsBuilder.entrySet() )
+        List<String> args = Lists.newArrayList();
+        for (Map.Entry<String, String> entry : argsBuilder.entrySet())
         {
             args.add(entry.getKey());
             args.add(entry.getValue());
@@ -116,28 +112,25 @@ public class ExhibitorServletContextListener implements ServletContextListener
 
     private Map<String, String> makeArgsBuilder()
     {
-        Map<String, String>     argsBuilder = Maps.newHashMap();
+        Map<String, String> argsBuilder = Maps.newHashMap();
 
         try
         {
-            URL         resource = Resources.getResource(EXHIBITOR_PROPERTIES);
+            URL resource = Resources.getResource(EXHIBITOR_PROPERTIES);
             InputStream stream = resource.openStream();
             try
             {
-                Properties  properties = new Properties(System.getProperties());
+                Properties properties = new Properties(System.getProperties());
                 properties.load(stream);
                 applyProperties(argsBuilder, properties);
-            }
-            finally
+            } finally
             {
                 CloseableUtils.closeQuietly(stream);
             }
-        }
-        catch ( IllegalArgumentException e )
+        } catch (IllegalArgumentException e)
         {
             log.warn("Could not find " + EXHIBITOR_PROPERTIES);
-        }
-        catch ( IOException e )
+        } catch (IOException e)
         {
             log.error("Could not load " + EXHIBITOR_PROPERTIES, e);
         }
@@ -150,13 +143,13 @@ public class ExhibitorServletContextListener implements ServletContextListener
     private void applyProperties(Map<String, String> argsBuilder, Properties properties)
     {
         Enumeration parameterNames = properties.propertyNames();
-        while ( parameterNames.hasMoreElements() )
+        while (parameterNames.hasMoreElements())
         {
-            String  name = String.valueOf(parameterNames.nextElement());
-            if ( name.startsWith(OUR_PREFIX) )
+            String name = String.valueOf(parameterNames.nextElement());
+            if (name.startsWith(OUR_PREFIX))
             {
-                String      value = properties.getProperty(name);
-                String      argName = name.substring(OUR_PREFIX.length());
+                String value = properties.getProperty(name);
+                String argName = name.substring(OUR_PREFIX.length());
                 argsBuilder.put("-" + argName, value);
 
                 log.info(String.format("Setting property %s=%s", argName, value));

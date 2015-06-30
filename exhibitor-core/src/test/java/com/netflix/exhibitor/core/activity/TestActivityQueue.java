@@ -16,10 +16,6 @@
 
 package com.netflix.exhibitor.core.activity;
 
-import com.google.common.collect.Lists;
-import org.apache.curator.utils.CloseableUtils;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,43 +24,49 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.curator.utils.CloseableUtils;
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.google.common.collect.Lists;
+
 public class TestActivityQueue
 {
     @Test
-    public void     test() throws Exception
+    public void test() throws Exception
     {
-        final CountDownLatch      latch = new CountDownLatch(2);
-        final ReentrantLock       lock = new ReentrantLock();
-        Thread                    t1 = new Thread
-        (
+        final CountDownLatch latch = new CountDownLatch(2);
+        final ReentrantLock lock = new ReentrantLock();
+        Thread t1 = new Thread
+                (
 
-            new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    lock.lock();
-                    latch.countDown();
-                }
-            }
-        );
-        Thread                    t2 = new Thread
-        (
+                        new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                lock.lock();
+                                latch.countDown();
+                            }
+                        }
+                );
+        Thread t2 = new Thread
+                (
 
-            new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    lock.lock();
-                    latch.countDown();
-                }
-            }
-        );
+                        new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                lock.lock();
+                                latch.countDown();
+                            }
+                        }
+                );
 
         t1.start();
         t2.start();
-        if ( latch.await(10, TimeUnit.SECONDS) )
+        if (latch.await(10, TimeUnit.SECONDS))
         {
             System.out.println("yep");
         }
@@ -73,7 +75,7 @@ public class TestActivityQueue
             System.out.println("nope");
         }
     }
-    
+
     @Test
     public void testSequential() throws Exception
     {
@@ -81,8 +83,8 @@ public class TestActivityQueue
         queue.start();
         try
         {
-            final CountDownLatch    latch = new CountDownLatch(1);
-            Activity                activity1 = new Activity()
+            final CountDownLatch latch = new CountDownLatch(1);
+            Activity activity1 = new Activity()
             {
                 @Override
                 public void completed(boolean wasSuccessful)
@@ -97,8 +99,8 @@ public class TestActivityQueue
                 }
             };
 
-            final AtomicBoolean     active = new AtomicBoolean(false);
-            Activity                activity2 = new Activity()
+            final AtomicBoolean active = new AtomicBoolean(false);
+            Activity activity2 = new Activity()
             {
                 @Override
                 public void completed(boolean wasSuccessful)
@@ -115,24 +117,23 @@ public class TestActivityQueue
 
             queue.add(QueueGroups.MAIN, activity1);
             queue.add(QueueGroups.MAIN, activity2);
-            for ( int i = 0; i < 10; ++i )
+            for (int i = 0; i < 10; ++i)
             {
                 Assert.assertFalse(active.get());
                 Thread.sleep(100);
             }
 
             queue.add(QueueGroups.IO, activity2);
-            for ( int i = 0; i < 10; ++i )
+            for (int i = 0; i < 10; ++i)
             {
-                if ( active.get() )
+                if (active.get())
                 {
                     break;
                 }
                 Thread.sleep(100);
             }
             Assert.assertTrue(active.get());
-        }
-        finally
+        } finally
         {
             CloseableUtils.closeQuietly(queue);
         }
@@ -145,9 +146,9 @@ public class TestActivityQueue
         queue.start();
         try
         {
-            final AtomicInteger     count = new AtomicInteger(0);
-            final CountDownLatch    latch = new CountDownLatch(1);
-            Activity                activity = new Activity()
+            final AtomicInteger count = new AtomicInteger(0);
+            final CountDownLatch latch = new CountDownLatch(1);
+            Activity activity = new Activity()
             {
                 @Override
                 public void completed(boolean wasSuccessful)
@@ -167,8 +168,7 @@ public class TestActivityQueue
             queue.replace(QueueGroups.MAIN, activity);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             Assert.assertEquals(count.get(), 1);
-        }
-        finally
+        } finally
         {
             CloseableUtils.closeQuietly(queue);
         }
@@ -179,14 +179,14 @@ public class TestActivityQueue
     {
         final int DELAY = 500;
 
-        RepeatingActivity       repeating = null;
-        ActivityQueue           queue = new ActivityQueue();
+        RepeatingActivity repeating = null;
+        ActivityQueue queue = new ActivityQueue();
         queue.start();
         try
         {
-            final List<Long>        times = Lists.newArrayList();
-            final CountDownLatch    latch = new CountDownLatch(3);
-            Activity                activity = new Activity()
+            final List<Long> times = Lists.newArrayList();
+            final CountDownLatch latch = new CountDownLatch(3);
+            Activity activity = new Activity()
             {
                 @Override
                 public void completed(boolean wasSuccessful)
@@ -204,28 +204,27 @@ public class TestActivityQueue
             repeating = new RepeatingActivityImpl(null, queue, QueueGroups.MAIN, activity, DELAY);
             repeating.start();
 
-            long                    start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             repeating.close();
 
             Assert.assertTrue(times.size() >= 3);
 
-            long        check = start;
-            for ( int i = 0; i < 3; ++i )
+            long check = start;
+            for (int i = 0; i < 3; ++i)
             {
                 long thisTime = times.get(i);
                 long elapsed = thisTime - check;
-                Assert.assertTrue(elapsed >= (DELAY - (DELAY / 10)), "elapsed: " + elapsed);
+                Assert.assertTrue("elapsed: " + elapsed, elapsed >= (DELAY - (DELAY / 10)));
                 check = thisTime;
             }
-        }
-        finally
+        } finally
         {
             CloseableUtils.closeQuietly(repeating);
             CloseableUtils.closeQuietly(queue);
         }
     }
-    
+
     @Test
     public void testDelay() throws Exception
     {
@@ -233,9 +232,9 @@ public class TestActivityQueue
         queue.start();
         try
         {
-            final AtomicLong        callTime = new AtomicLong();
-            final CountDownLatch    latch = new CountDownLatch(1);
-            Activity                activity = new Activity()
+            final AtomicLong callTime = new AtomicLong();
+            final CountDownLatch latch = new CountDownLatch(1);
+            Activity activity = new Activity()
             {
                 @Override
                 public void completed(boolean wasSuccessful)
@@ -251,12 +250,11 @@ public class TestActivityQueue
                 }
             };
 
-            long                    start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
             queue.add(QueueGroups.MAIN, activity, 2, TimeUnit.SECONDS);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
             Assert.assertTrue((callTime.get() - start) >= 2000);
-        }
-        finally
+        } finally
         {
             CloseableUtils.closeQuietly(queue);
         }
@@ -269,8 +267,8 @@ public class TestActivityQueue
         queue.start();
         try
         {
-            final CountDownLatch    latch = new CountDownLatch(2);
-            Activity                activity = new Activity()
+            final CountDownLatch latch = new CountDownLatch(2);
+            Activity activity = new Activity()
             {
                 @Override
                 public void completed(boolean wasSuccessful)
@@ -288,8 +286,7 @@ public class TestActivityQueue
 
             queue.add(QueueGroups.MAIN, activity);
             Assert.assertTrue(latch.await(5, TimeUnit.SECONDS));
-        }
-        finally
+        } finally
         {
             CloseableUtils.closeQuietly(queue);
         }

@@ -16,11 +16,12 @@
 
 package com.netflix.exhibitor.core.state;
 
-import org.testng.Assert;
-import org.testng.annotations.Test;
+import static com.netflix.exhibitor.core.state.ServerType.STANDARD;
+
 import java.util.Arrays;
 
-import static com.netflix.exhibitor.core.state.ServerType.STANDARD;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class TestServerList
 {

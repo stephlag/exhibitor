@@ -16,15 +16,17 @@
 
 package com.netflix.exhibitor.core.s3;
 
-import com.amazonaws.services.s3.AmazonS3Client;
-import org.testng.Assert;
-import org.testng.annotations.Test;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.amazonaws.services.s3.AmazonS3Client;
 
 public class TestRefCountedClient
 {
@@ -58,7 +60,7 @@ public class TestRefCountedClient
         );
 
         future.get();
-        if ( shutdownLatch.await(5, TimeUnit.SECONDS) )
+        if (shutdownLatch.await(5, TimeUnit.SECONDS))
         {
             return;
         }

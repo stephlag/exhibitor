@@ -16,6 +16,15 @@
 
 package com.netflix.exhibitor.core.state;
 
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.prefs.Preferences;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import com.netflix.exhibitor.core.Exhibitor;
 import com.netflix.exhibitor.core.config.ConfigManager;
 import com.netflix.exhibitor.core.config.InstanceConfig;
@@ -23,13 +32,6 @@ import com.netflix.exhibitor.core.config.IntConfigs;
 import com.netflix.exhibitor.core.config.StringConfigs;
 import com.netflix.exhibitor.core.controlpanel.ControlPanelTypes;
 import com.netflix.exhibitor.core.controlpanel.ControlPanelValues;
-import org.mockito.Mockito;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.prefs.Preferences;
 
 public class TestMonitorRunningInstance
 {
